@@ -32,23 +32,29 @@ export type Database = {
       }
       events: {
         Row: {
+          consumed: boolean
           data: Json | null
           name: string
           poisoned: boolean
+          retrycount: number
           time: string
           userid: number
         }
         Insert: {
+          consumed?: boolean
           data?: Json | null
           name: string
           poisoned?: boolean
+          retrycount?: number
           time: string
           userid: number
         }
         Update: {
+          consumed?: boolean
           data?: Json | null
           name?: string
           poisoned?: boolean
+          retrycount?: number
           time?: string
           userid?: number
         }
