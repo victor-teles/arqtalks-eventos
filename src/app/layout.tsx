@@ -9,6 +9,7 @@ const fontSans = FontSans({
 	subsets: ["latin"],
 	variable: "--font-sans",
 });
+
 export const metadata: Metadata = {
 	title: "ArqTalks - Arquitetura de eventos",
 	description: "ArqTalks - Arquitetura de eventos",
@@ -28,7 +29,7 @@ export default function RootLayout({
 				)}
 			>
 				<Header />
-				<main className="flex h-[calc(100%-64px)] flex-col items-center justify-between container py-24">
+				<main className="flex h-[calc(100%-64px)] flex-col items-center justify-between container  py-24">
 					{children}
 				</main>
 				<Toaster />
