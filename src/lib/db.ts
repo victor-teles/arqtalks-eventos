@@ -1,9 +1,52 @@
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "./database.types";
+import { Database, Tables } from "./database.types";
 
-export default createClient<Database>(
+const db = createClient<Database>(
 	// biome-ignore lint/style/noNonNullAssertion: <explanation>
 	process.env.NEXT_PUBLIC_SUPABASE_URL!,
 	// biome-ignore lint/style/noNonNullAssertion: <explanation>
 	process.env.NEXT_PUBLIC_SUPABASE_KEY!,
 );
+
+export default db;
+
+const fetchedEventsPage = new Map<string, number>();
+
+export async function* fetchEvent(eventName: string) {
+	while (true) {
+		let page = fetchedEventsPage.get(eventName);
+
+		if (!page) {
+			page = 1;
+		}
+
+		const event = await db
+			.from("events")
+			.select("*")
+			.eq("name", eventName)
+			.order("time", { ascending: true })
+			.range(page, page)
+			.single();
+
+		fetchedEventsPage.set(eventName, ++page);
+		yield event.data;
+	}
+}
+
+export async function consumeMessage(time: Date, eventName: string) {
+	await db
+		.from("events")
+		.update({ consumed: true })
+		.eq("time", time)
+		.eq("name", eventName);
+}
+
+export async function countEvents(eventName: string): Promise<number> {
+	const { count } = await db
+		.from("events")
+		.select("name", { count: "exact" })
+		.eq("name", eventName)
+		.eq("consumed", true);
+
+	return count ?? 0;
+}
