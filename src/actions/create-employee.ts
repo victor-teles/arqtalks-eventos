@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
-import { sendEventDb } from "@/lib/event-db";
+import { sendEvent } from "@/lib/event";
 import { slugify } from "@/lib/slugfy";
 import { nanoid } from "nanoid";
 import { redirect } from "next/navigation";
@@ -17,7 +17,7 @@ export async function createEmployee(formData: FormData) {
 		.single();
 
 	if (user.data)
-		await sendEventDb({
+		await sendEvent({
 			name: "usuario.criado",
 			time: new Date(),
 			poisoned: false,

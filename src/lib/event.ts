@@ -7,7 +7,7 @@ export type Event = {
 };
 
 export async function sendEvent(event: Event) {
-	await fetch("/api/event", {
+	await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/event`, {
 		method: "post",
 		body: JSON.stringify(event),
 	});

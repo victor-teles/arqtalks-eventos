@@ -22,7 +22,7 @@ function NameInput() {
 			disabled={pending}
 			type="text"
 			placeholder="Escreva seu nome"
-			maxLength={30}
+			maxLength={15}
 			required
 			name="name"
 		/>

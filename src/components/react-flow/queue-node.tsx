@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { PiCylinderDuotone } from "react-icons/pi";
-import { Handle, Position } from "reactflow";
+import { Handle, NodeToolbar, Position } from "reactflow";
 
 type Data = {
 	label: string;
@@ -27,6 +27,12 @@ function QueueNode({ data }: Props) {
 			<Handle
 				type="source"
 				position={Position.Right}
+				className="w-16 !bg-teal-500"
+			/>
+
+			<Handle
+				type="target"
+				position={Position.Left}
 				className="w-16 !bg-teal-500"
 			/>
 		</div>

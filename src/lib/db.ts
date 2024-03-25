@@ -1,3 +1,4 @@
+import { Message } from "@/components/react-flow/message";
 import { createClient } from "@supabase/supabase-js";
 import { Database, Tables } from "./database.types";
 
@@ -17,13 +18,16 @@ export async function* fetchEvent(eventName: string) {
 		let page = fetchedEventsPage.get(eventName);
 
 		if (!page) {
-			page = 1;
+			page = 0;
 		}
 
 		const event = await db
 			.from("events")
 			.select("*")
 			.eq("name", eventName)
+			.eq("consumed", false)
+			.eq("inredelivery", false)
+			.eq("indeadletter", false)
 			.order("time", { ascending: true })
 			.range(page, page)
 			.single();
@@ -33,12 +37,34 @@ export async function* fetchEvent(eventName: string) {
 	}
 }
 
-export async function consumeMessage(time: Date, eventName: string) {
+export async function consumeMessage(message: Message) {
 	await db
 		.from("events")
 		.update({ consumed: true })
-		.eq("time", time)
-		.eq("name", eventName);
+		.eq("time", message.time)
+		.eq("name", message.name)
+		.eq("userid", message.userid);
+}
+
+export async function redelivery(message: Message) {
+	await db
+		.from("events")
+		.update({
+			inredelivery: message.inRedelivery,
+			retrycount: message.retryCount,
+		})
+		.eq("time", message.time)
+		.eq("name", message.name)
+		.eq("userid", message.userid);
+}
+
+export async function deadletter(message: Message) {
+	await db
+		.from("events")
+		.update({ indeadletter: message.inDeadLetter })
+		.eq("time", message.time)
+		.eq("name", message.name)
+		.eq("userid", message.userid);
 }
 
 export async function countEvents(eventName: string): Promise<number> {

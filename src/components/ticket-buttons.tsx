@@ -76,7 +76,6 @@ export default function TicketButtons({ user }: Props) {
 
 			<div className="flex gap-4">
 				<Button onClick={shootConfetti}>Jogar confete 🎉</Button>
-				<Button disabled>Loja virtual</Button>
 			</div>
 		</div>
 	);
