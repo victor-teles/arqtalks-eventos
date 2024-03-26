@@ -58,25 +58,27 @@ export default function TicketButtons({ user }: Props) {
 	}, [controllerFireworks]);
 
 	return (
-		<div className="flex gap-4 justify-between">
+		<>
 			<ReactCanvasConfetti onInit={onInitHandler} />
 
-			<div className="flex gap-4">
-				{colorsButtons.map((color) => (
-					<Button
-						onClick={() => changeColor(color)}
-						size={"icon"}
-						className={cn({
-							"shadow-inner": color === user.ticketcolor,
-						})}
-						style={{ backgroundColor: color }}
-					></Button>
-				))}
-			</div>
+			<div className="flex flex-col lg:flex-row gap-4 items-center lg:justify-between">
+				<div className="flex gap-4">
+					{colorsButtons.map((color) => (
+						<Button
+							onClick={() => changeColor(color)}
+							size={"icon"}
+							className={cn({
+								"shadow-inner": color === user.ticketcolor,
+							})}
+							style={{ backgroundColor: color }}
+						></Button>
+					))}
+				</div>
 
-			<div className="flex gap-4">
-				<Button onClick={shootConfetti}>Jogar confete 🎉</Button>
+				<div className="flex gap-4">
+					<Button onClick={shootConfetti}>Jogar confete 🎉</Button>
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }

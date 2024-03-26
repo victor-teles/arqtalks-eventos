@@ -56,7 +56,7 @@ export const initialNodes: any = [
 	},
 	{
 		id: "redelivery-group",
-		data: { label: "Schedule space 🔂" },
+		data: { label: "Espaço agendamento 🔂 (schedule) " },
 		position: {
 			x: 1000,
 			y: 0,
@@ -70,7 +70,7 @@ export const initialNodes: any = [
 	},
 	{
 		id: "dead-letter-group",
-		data: { label: "Dead Letter space 💀" },
+		data: { label: "Espaço Dead Letter 💀" },
 		position: {
 			x: 1400,
 			y: 0,

@@ -25,14 +25,13 @@ export default async function TickePage({
 	const hostname = headersList.get("x-forwarded-host");
 
 	const url = `https://${hostname}/ticket/${params.slug}`;
-	const ticketColor = user?.ticketcolor ?? "#252729";
 
 	return (
 		<div className="flex gap-4">
 			<div className="flex flex-col gap-6">
 				<h1
 					className={cn(
-						"scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-6xl",
+						"text-center md:text-start scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-6xl",
 						styleUtils.appear,
 						styleUtils["appear-first"],
 					)}

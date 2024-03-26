@@ -14,14 +14,18 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { countEvents, fetchEvent, redelivery } from "@/lib/db";
+import {
+	consumeMessage,
+	countEvents,
+	deadletter,
+	fetchEvent,
+	redelivery,
+} from "@/lib/db";
 import { usePub, useSub } from "@/lib/use-pubsub";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import ReactFlow, {
 	Background,
 	Edge,
-	Position,
-	XYPosition,
 	useEdgesState,
 	useNodesState,
 } from "reactflow";
@@ -36,6 +40,13 @@ import { MetricTopic, reducerConsumeConfig, reducerMetrics } from "./reducers";
 
 let globalId = 6;
 const getId = () => `${globalId++}`;
+
+const consumerId: { [key: string]: number } = {
+	"usuario.criado": 0,
+	"usuario.cor-ticket-alterada": 0,
+	"usuario.ficou-feliz": 0,
+};
+const getConsumerId = (event: string) => consumerId[event]++;
 
 const metricTopicsMap: MetricTopic = {
 	"usuario.criado": "users",
@@ -54,6 +65,7 @@ export default function LiveTicket() {
 		{
 			queue: "3",
 			velocity: 3.2,
+			scheduleConfigured: false,
 		},
 	);
 	const [metrics, dispatchMetrics] = useReducer(reducerMetrics, {
@@ -100,17 +112,37 @@ export default function LiveTicket() {
 		async (data) => {
 			const consumedEdge = edges.find((x) => x.id === data.id);
 			const message = data.message;
+			const messagesInRedelivery =
+				nodes.filter((n) => n.parentNode === "redelivery-group")?.length ?? 0;
+			const messagesInDeadLetter =
+				nodes.filter((n) => n.parentNode === "dead-letter-group")?.length ?? 0;
 
-			if (message.poisoned || !consumedEdge) return;
+			if (!consumedEdge) return;
 
-			await fetchNextMessage(message.name, consumedEdge);
+			if (message.poisoned) {
+				if (message.retryCount >= 3) {
+					await deadletter(message);
+					addMessageToDeadLetter(message, (messagesInDeadLetter + 1) * 80);
+					await fetchNextMessages([consumedEdge]);
+					return;
+				}
+				if (consumeConfig.scheduleConfigured) {
+					await redeliveryEdges([consumedEdge], messagesInRedelivery + 1);
+					await fetchNextMessages([consumedEdge]);
+				}
+
+				return;
+			}
+
+			await consumeMessage(message);
+			await fetchNextMessage(consumedEdge);
 
 			dispatchMetrics({
 				type: "INCREASE",
 				payload: { metricName: metricTopicsMap[message.name] },
 			});
 		},
-		[edges],
+		[edges, consumeConfig, nodes],
 	);
 
 	const removeAllPoisonedMessages = useCallback(async () => {
@@ -120,14 +152,8 @@ export default function LiveTicket() {
 			return message?.poisoned === true;
 		});
 
-		for (const [index, edge] of poisonedEdges.entries()) {
-			const message = edge.data?.message;
-			if (!message?.name) continue;
-
-			await fetchNextMessage(message.name, edge);
-			await redelivery({ ...message, retryCount: message.retryCount + 1 });
-			addMessageToRedelivery(message, (index + 1) * 80);
-		}
+		await redeliveryEdges(poisonedEdges);
+		await fetchNextMessages(poisonedEdges);
 	}, [edges]);
 
 	const addMessageToRedelivery = useCallback((message: Message, y: number) => {
@@ -135,7 +161,9 @@ export default function LiveTicket() {
 			id: message.time.toString(),
 			position: { x: 50, y },
 			data: {
+				count: true,
 				message,
+				onMessageScheduleFinished: removeMessageFromRedelivery,
 			},
 			parentNode: "redelivery-group",
 			type: "message",
@@ -144,9 +172,39 @@ export default function LiveTicket() {
 		setNodes((nds) => nds.concat(newNode));
 	}, []);
 
+	const addMessageToDeadLetter = useCallback((message: Message, y: number) => {
+		const newNode = {
+			id: message.time.toString(),
+			position: { x: 50, y },
+			data: {
+				message,
+				count: false,
+			},
+			parentNode: "dead-letter-group",
+			type: "message",
+		};
+
+		setNodes((nds) => nds.concat(newNode));
+	}, []);
+
+	const removeMessageFromRedelivery = useCallback(
+		async (id: string, message: Message) => {
+			await redelivery({
+				...message,
+				inRedelivery: false,
+			});
+			setNodes((nds) => nds.filter((n) => n.id !== id));
+		},
+		[],
+	);
+
 	const fetchNextMessage = useCallback(
-		async (event: string, consumedEdge: Edge<EdgeData>) => {
-			const nextMessage = await fetchEvent(event).next();
+		async (consumedEdge: Edge<EdgeData>) => {
+			const consumerNode = nodes.find(
+				(node) => node.id === consumedEdge.target,
+			);
+
+			const nextMessage = await fetchEvent(consumerNode?.data).next();
 
 			if (nextMessage.value?.userid === undefined) return;
 			const edge = createEdge(
@@ -158,6 +216,48 @@ export default function LiveTicket() {
 			setEdges((eds) => {
 				return [...eds.filter((x) => x.id !== consumedEdge.id), edge];
 			});
+		},
+		[consumeConfig, nodes],
+	);
+
+	const fetchNextMessages = useCallback(
+		async (consumedEdges: Edge<EdgeData>[]) => {
+			const createdEdges: Edge<EdgeData>[] = [];
+
+			for (const edge of consumedEdges) {
+				const message = edge?.data?.message;
+				if (!message?.name) continue;
+
+				const consumerNode = nodes.find((node) => node.id === edge.target);
+
+				const nextMessage = await fetchEvent(consumerNode?.data).next();
+				const createdEdge = createEdge(edge.id, edge.source, nextMessage);
+				createdEdges.push(createdEdge);
+			}
+
+			setEdges((eds) => {
+				return [
+					...eds.filter((x) => !consumedEdges.find((y) => y.id === x.id)),
+					...createdEdges,
+				];
+			});
+		},
+		[consumeConfig, nodes],
+	);
+
+	const redeliveryEdges = useCallback(
+		async (consumedEdges: Edge<EdgeData>[], elements = 0) => {
+			for (const [index, edge] of consumedEdges.entries()) {
+				const message = edge.data?.message;
+				if (!message?.name) continue;
+
+				await redelivery({
+					...message,
+					retryCount: ++message.retryCount,
+					inRedelivery: true,
+				});
+				addMessageToRedelivery(message, (elements || index + 1) * 80);
+			}
 		},
 		[consumeConfig],
 	);
@@ -180,11 +280,12 @@ export default function LiveTicket() {
 				label: "Consumidor",
 				queue: queueNode?.data.queue ?? "fila",
 				queueId: consumeConfig.queue,
+				consumerId: getConsumerId(queueNode?.data.queue),
 			},
 			type: "consumer",
 		};
 
-		const message = await fetchEvent(queueNode?.data.queue).next();
+		const message = await fetchEvent(newNode?.data).next();
 		const newEdge = createEdge(id, consumeConfig.queue, message);
 
 		setNodes((nds) => nds.concat(newNode));
@@ -208,6 +309,10 @@ export default function LiveTicket() {
 	};
 
 	const onConfigureSchedule = () => {
+		dispatchConsumeConfig({
+			type: "ENABLE_SCHEDULE",
+			payload: { scheduleConfigured: true },
+		});
 		removeAllPoisonedMessages();
 	};
 
@@ -233,24 +338,29 @@ export default function LiveTicket() {
 
 			<Separator />
 
-			<div className="flex gap-4 justify-end">
-				<Select
-					onValueChange={onSelectQueueChanged}
-					value={consumeConfig.queue}
-				>
-					<SelectTrigger className="w-[180px]">
-						<SelectValue placeholder="Selecione uma fila" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectGroup>
-							<SelectLabel>Fila</SelectLabel>
-							<SelectItem value="3">Usuário criado</SelectItem>
-							<SelectItem value="4">Usuario ficou feliz</SelectItem>
-							<SelectItem value="5">Cor ticket alterada</SelectItem>
-						</SelectGroup>
-					</SelectContent>
-				</Select>
-				<Button onClick={onAddConsumer}>Adicionar consumidor</Button>
+			<div className="flex gap-4 justify-between">
+				<h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0 self-start">
+					Diagrama interativo
+				</h2>
+				<div className="flex gap-4">
+					<Select
+						onValueChange={onSelectQueueChanged}
+						value={consumeConfig.queue}
+					>
+						<SelectTrigger className="w-[180px]">
+							<SelectValue placeholder="Selecione uma fila" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectGroup>
+								<SelectLabel>Fila</SelectLabel>
+								<SelectItem value="3">Usuário criado</SelectItem>
+								<SelectItem value="4">Usuario ficou feliz</SelectItem>
+								<SelectItem value="5">Cor ticket alterada</SelectItem>
+							</SelectGroup>
+						</SelectContent>
+					</Select>
+					<Button onClick={onAddConsumer}>Adicionar consumidor</Button>
+				</div>
 			</div>
 
 			<div style={{ height: "500px" }}>
@@ -331,8 +441,8 @@ function toMessage({ message }: { message: any }) {
 		consumed: event.consumed,
 		user: event.data?.name ?? "Usuário",
 		poisoned: event.poisoned,
-		inRedelivery: event.inRedelivery,
-		inDeadLetter: event.inDeadLetter,
-		retryCount: event.retryCount,
+		inRedelivery: event.inredelivery,
+		inDeadLetter: event.indeadletter,
+		retryCount: event.retrycount,
 	};
 }

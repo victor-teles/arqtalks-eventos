@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 		name: req.name,
 		time: req.time,
 		userid: req.userId,
-		poisoned: (poisonCount?.at(0)?.poison_count ?? 0) % 10 === 0,
+		poisoned: (poisonCount?.at(0)?.poison_count ?? 0) % 20 === 0,
 	});
 
 	return new Response("", {

@@ -33,6 +33,7 @@ export type Database = {
       events: {
         Row: {
           consumed: boolean
+          consuming: boolean
           data: Json | null
           indeadletter: boolean
           inredelivery: boolean
@@ -44,6 +45,7 @@ export type Database = {
         }
         Insert: {
           consumed?: boolean
+          consuming?: boolean
           data?: Json | null
           indeadletter?: boolean
           inredelivery?: boolean
@@ -55,6 +57,7 @@ export type Database = {
         }
         Update: {
           consumed?: boolean
+          consuming?: boolean
           data?: Json | null
           indeadletter?: boolean
           inredelivery?: boolean

@@ -1,11 +1,13 @@
 enum ConsumeConfigKind {
 	CHANGE_QUEUE = "CHANGE_QUEUE",
 	INCRESE_VELOCITY = "INCRESE_VELOCITY",
+	ENABLE_SCHEDULE = "ENABLE_SCHEDULE",
 }
 
 type ConsumeConfigState = {
 	queue: string;
 	velocity: number;
+	scheduleConfigured: boolean;
 };
 
 type ConsumeConfigAction =
@@ -16,6 +18,10 @@ type ConsumeConfigAction =
 	| {
 			type: "INCRESE_VELOCITY";
 			payload: { velocity: number };
+	  }
+	| {
+			type: "ENABLE_SCHEDULE";
+			payload: { scheduleConfigured: boolean };
 	  };
 
 export function reducerConsumeConfig(
@@ -33,6 +39,11 @@ export function reducerConsumeConfig(
 			return {
 				...state,
 				velocity: payload.velocity,
+			};
+		case ConsumeConfigKind.ENABLE_SCHEDULE:
+			return {
+				...state,
+				scheduleConfigured: payload.scheduleConfigured,
 			};
 		default:
 			return state;

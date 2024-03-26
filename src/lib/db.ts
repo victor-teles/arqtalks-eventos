@@ -11,39 +11,86 @@ const db = createClient<Database>(
 
 export default db;
 
-const fetchedEventsPage = new Map<string, number>();
+type ConsumeMetadata = { page: number; locked: boolean };
+const fetchedEventsPage = new Map<string, ConsumeMetadata>();
 
-export async function* fetchEvent(eventName: string) {
+type EventPayload = { queue: string; consumerId: number };
+
+export async function* fetchEvent(payload: EventPayload): AsyncIterator<{
+	consumed: boolean;
+	data: any;
+	indeadletter: boolean;
+	inredelivery: boolean;
+	name: string;
+	poisoned: boolean;
+	retrycount: number;
+	time: string;
+	userid: number;
+} | null> {
 	while (true) {
-		let page = fetchedEventsPage.get(eventName);
+		let metadata: ConsumeMetadata | undefined = fetchedEventsPage.get(
+			payload.queue,
+		);
 
-		if (!page) {
-			page = 0;
+		if (!metadata) {
+			metadata = { locked: false, page: payload.consumerId };
 		}
 
-		const event = await db
-			.from("events")
-			.select("*")
-			.eq("name", eventName)
-			.eq("consumed", false)
-			.eq("inredelivery", false)
-			.eq("indeadletter", false)
-			.order("time", { ascending: true })
-			.range(page, page)
-			.single();
+		if (metadata.locked) {
+			await new Promise((resolve) => setTimeout(resolve, 200));
+			//@ts-ignore
+			yield* fetchEvent(payload.queue);
+		} else {
+			metadata.locked = true;
 
-		fetchedEventsPage.set(eventName, ++page);
-		yield event.data;
+			const event = await db
+				.from("events")
+				.select("*")
+				.eq("name", payload.queue)
+				.eq("consumed", false)
+				.eq("consuming", false)
+				.eq("inredelivery", false)
+				.eq("indeadletter", false)
+				.order("time", { ascending: true })
+				.range(payload.consumerId, payload.consumerId)
+				.single();
+
+			if (event.data)
+				await consumingMessage(
+					event.data.time,
+					event.data.name,
+					event.data.userid,
+				);
+
+			metadata.locked = false;
+
+			fetchedEventsPage.set(payload.queue, metadata);
+
+			yield event.data;
+		}
 	}
 }
 
 export async function consumeMessage(message: Message) {
 	await db
 		.from("events")
-		.update({ consumed: true })
+		.update({ consumed: true, consuming: false })
 		.eq("time", message.time)
 		.eq("name", message.name)
 		.eq("userid", message.userid);
+}
+
+export async function consumingMessage(
+	time: string,
+	name: string,
+	userid: number,
+) {
+	await db
+		.from("events")
+		.update({ consuming: true })
+		.eq("time", time)
+		.eq("name", name)
+		.eq("userid", userid);
 }
 
 export async function redelivery(message: Message) {
@@ -52,6 +99,7 @@ export async function redelivery(message: Message) {
 		.update({
 			inredelivery: message.inRedelivery,
 			retrycount: message.retryCount,
+			consuming: false,
 		})
 		.eq("time", message.time)
 		.eq("name", message.name)
