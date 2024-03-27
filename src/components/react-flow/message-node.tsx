@@ -45,9 +45,9 @@ function MessageNode({ id, data }: Props) {
 					<div className="ml-2">
 						<div className="text-md font-bold">Usuário</div>
 						<div className="text-sm text-white">{data.message.user}</div>
-						<div className="text-xs text-muted-foreground">
+						{/* <div className="text-xs text-muted-foreground">
 							{data.message.name}
-						</div>
+						</div> */}
 					</div>
 				</div>
 
