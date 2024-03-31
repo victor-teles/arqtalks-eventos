@@ -4,6 +4,7 @@ export type Event = {
 	userId: number;
 	data?: Record<string, unknown>;
 	poisoned: boolean;
+	user: string;
 };
 
 export async function sendEvent(event: Event) {

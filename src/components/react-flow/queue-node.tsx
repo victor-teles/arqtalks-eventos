@@ -8,10 +8,11 @@ type Data = {
 };
 
 type Props = {
+	id: string;
 	data: Data;
 };
 
-function QueueNode({ data }: Props) {
+function QueueNode({ data, id }: Props) {
 	return (
 		<div className="px-4 py-2 rounded-xl border bg-card text-card-foreground shadow">
 			<div className="flex items-center">
@@ -20,7 +21,7 @@ function QueueNode({ data }: Props) {
 				</div>
 				<div className="ml-2">
 					<div className="text-md font-bold">{data.label}</div>
-					<div className="text-sm text-muted-foreground">{data.queue}</div>
+					<div className="text-sm text-muted-foreground">{id}</div>
 				</div>
 			</div>
 

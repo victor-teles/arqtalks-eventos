@@ -1,10 +1,10 @@
 "use client";
 
-import { User } from "@/lib/user";
+import type { User } from "@/lib/user";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import ReactCanvasConfetti from "react-canvas-confetti/dist/presets/fireworks";
-import { TConductorInstance } from "react-canvas-confetti/dist/types";
+import type { TConductorInstance } from "react-canvas-confetti/dist/types";
 import Tilt from "vanilla-tilt";
 import TicketFrame from "./ticket-frame";
 import TicketFrameMobile from "./ticket-frame-mobile";

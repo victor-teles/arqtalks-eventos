@@ -23,33 +23,32 @@ export const edgeTypes = {
 
 export const initialNodes: any = [
 	{
-		id: "1",
+		id: "api-ticket",
 		type: "app",
 		data: { label: "API Ticket", queue: "Publicador" },
 		position: { x: -1000, y: 500 },
 	},
 	{
-		id: "2",
+		id: "service-bus",
 		type: "serviceBus",
 		position: { x: -500, y: 500 },
 	},
 	{
-		id: "3",
-		data: { label: "Usuario criado", queue: "usuario.criado" },
+		id: "usuario.criado",
+		data: { label: "Usuario criado" },
 		position: { x: 0, y: 0 },
 		type: "queue",
 	},
 	{
-		id: "4",
-		data: { label: "Usuario ficou feliz", queue: "usuario.ficou-feliz" },
+		id: "usuario.ficou-feliz",
+		data: { label: "Usuario ficou feliz" },
 		position: { x: 0, y: 500 },
 		type: "queue",
 	},
 	{
-		id: "5",
+		id: "usuario.cor-ticket-alterada",
 		data: {
 			label: "Cor ticket alterada",
-			queue: "usuario.cor-ticket-alterada",
 		},
 		position: { x: 0, y: 1000 },
 		type: "queue",
@@ -86,29 +85,29 @@ export const initialNodes: any = [
 export const initialEdges = [
 	{
 		id: "animated-1",
-		source: "1",
-		target: "2",
+		source: "api-ticket",
+		target: "service-bus",
 		type: "animated",
 		data: {},
 	},
 	{
 		id: "animated-2",
-		source: "2",
-		target: "3",
+		source: "service-bus",
+		target: "usuario.criado",
 		type: "animated",
 		data: {},
 	},
 	{
 		id: "animated-3",
-		source: "2",
-		target: "4",
+		source: "service-bus",
+		target: "usuario.ficou-feliz",
 		type: "animated",
 		data: {},
 	},
 	{
 		id: "animated-4",
-		source: "2",
-		target: "5",
+		source: "service-bus",
+		target: "usuario.cor-ticket-alterada",
 		type: "animated",
 		data: {},
 	},

@@ -69,6 +69,27 @@ export type Database = {
         }
         Relationships: []
       }
+      metrics: {
+        Row: {
+          colorchanges: number
+          happy: number
+          users: number
+          version: number
+        }
+        Insert: {
+          colorchanges?: number
+          happy?: number
+          users?: number
+          version?: never
+        }
+        Update: {
+          colorchanges?: number
+          happy?: number
+          users?: number
+          version?: never
+        }
+        Relationships: []
+      }
       poison_director: {
         Row: {
           count: number | null

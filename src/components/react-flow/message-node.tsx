@@ -1,6 +1,6 @@
+import type { Message } from "@/lib/bus/message";
 import React, { memo, useEffect, useState } from "react";
 import { PiEnvelopeDuotone } from "react-icons/pi";
-import { Message } from "./message";
 
 type Data = {
 	message: Message;
@@ -45,9 +45,6 @@ function MessageNode({ id, data }: Props) {
 					<div className="ml-2">
 						<div className="text-md font-bold">Usuário</div>
 						<div className="text-sm text-white">{data.message.user}</div>
-						{/* <div className="text-xs text-muted-foreground">
-							{data.message.name}
-						</div> */}
 					</div>
 				</div>
 

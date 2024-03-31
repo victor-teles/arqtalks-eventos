@@ -55,10 +55,10 @@ enum MetricsKind {
 	SET_MANY = "SET_MANY",
 }
 
-type MetricsState = {
-	happy: number;
-	colorChanges: number;
-	users: number;
+export type MetricsState = {
+	"usuario.criado": number;
+	"usuario.cor-ticket-alterada": number;
+	"usuario.ficou-feliz": number;
 };
 
 export type MetricTopic = { [key: string]: keyof MetricsState };

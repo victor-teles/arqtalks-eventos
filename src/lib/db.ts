@@ -1,11 +1,9 @@
-import { Message } from "@/components/react-flow/message";
 import { createClient } from "@supabase/supabase-js";
-import { Database, Tables } from "./database.types";
+import type { Message } from "./bus/message";
+import type { Database } from "./database.types";
 
 const db = createClient<Database>(
-	// biome-ignore lint/style/noNonNullAssertion: <explanation>
 	process.env.NEXT_PUBLIC_SUPABASE_URL!,
-	// biome-ignore lint/style/noNonNullAssertion: <explanation>
 	process.env.NEXT_PUBLIC_SUPABASE_KEY!,
 );
 
@@ -77,7 +75,7 @@ export async function consumeMessage(message: Message) {
 		.update({ consumed: true, consuming: false })
 		.eq("time", message.time)
 		.eq("name", message.name)
-		.eq("userid", message.userid);
+		.eq("userid", message.userId);
 }
 
 export async function consumingMessage(
@@ -103,7 +101,7 @@ export async function redelivery(message: Message) {
 		})
 		.eq("time", message.time)
 		.eq("name", message.name)
-		.eq("userid", message.userid);
+		.eq("userid", message.userId);
 }
 
 export async function deadletter(message: Message) {
@@ -112,15 +110,34 @@ export async function deadletter(message: Message) {
 		.update({ indeadletter: message.inDeadLetter })
 		.eq("time", message.time)
 		.eq("name", message.name)
-		.eq("userid", message.userid);
+		.eq("userid", message.userId);
 }
 
-export async function countEvents(eventName: string): Promise<number> {
-	const { count } = await db
-		.from("events")
-		.select("name", { count: "exact" })
-		.eq("name", eventName)
-		.eq("consumed", true);
+export async function getMetrics(): Promise<{
+	happy: number;
+	colorChanges: number;
+	users: number;
+}> {
+	const { data } = await db.from("metrics").select("*").single();
 
-	return count ?? 0;
+	return {
+		happy: data?.happy ?? 0,
+		colorChanges: data?.colorchanges ?? 0,
+		users: data?.users ?? 0,
+	};
+}
+
+export async function updateMetrics(metrics: {
+	happy: number;
+	colorChanges: number;
+	users: number;
+}): Promise<void> {
+	await db
+		.from("metrics")
+		.update({
+			colorchanges: metrics.colorChanges,
+			happy: metrics.happy,
+			users: metrics.users,
+		})
+		.eq("version", 1);
 }

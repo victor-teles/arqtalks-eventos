@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { BaseEdge, EdgeProps, getBezierPath } from "reactflow";
+import type { Message } from "@/lib/bus/message";
+
+import { BaseEdge, type EdgeProps, getBezierPath } from "reactflow";
 import { AnimatedEvent } from "./animated-event";
-import { Message } from "./message";
 
 type Data = {
 	velocity?: number;

@@ -22,6 +22,7 @@ export async function createEmployee(formData: FormData) {
 			time: new Date(),
 			poisoned: false,
 			userId: user.data.id,
+			user: user.data.name,
 			data: { ...user.data },
 		});
 

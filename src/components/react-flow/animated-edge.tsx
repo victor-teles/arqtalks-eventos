@@ -1,10 +1,4 @@
-import { useState } from "react";
-import {
-	BaseEdge,
-	EdgeLabelRenderer,
-	EdgeProps,
-	getBezierPath,
-} from "reactflow";
+import { BaseEdge, type EdgeProps, getBezierPath } from "reactflow";
 
 type Data = {
 	animated: boolean;
@@ -13,18 +7,15 @@ type Data = {
 type Props = EdgeProps<Data> & {};
 
 export default function AnimatedEdge({
-	id,
 	sourceX,
 	sourceY,
 	targetX,
 	targetY,
 	sourcePosition,
 	targetPosition,
-	data,
-	label,
 	markerEnd,
 }: Props) {
-	const [edgePath, labelX, labelY] = getBezierPath({
+	const [edgePath] = getBezierPath({
 		sourceX,
 		sourceY,
 		sourcePosition,

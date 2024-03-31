@@ -1,12 +1,12 @@
 "use client";
 
 import { sendEvent } from "@/lib/event";
-import { User } from "@/lib/user";
+import type { User } from "@/lib/user";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ReactCanvasConfetti from "react-canvas-confetti/dist/presets/fireworks";
-import { TConductorInstance } from "react-canvas-confetti/dist/types";
+import type { TConductorInstance } from "react-canvas-confetti/dist/types";
 import { Button } from "./ui/button";
 
 type Props = {
@@ -29,6 +29,7 @@ export default function TicketButtons({ user }: Props) {
 			poisoned: false,
 			time: new Date(),
 			userId: user.id,
+			user: user.name,
 			data: { ...user },
 		});
 		controllerFireworks?.shoot();
@@ -46,6 +47,7 @@ export default function TicketButtons({ user }: Props) {
 				poisoned: false,
 				time: new Date(),
 				userId: user.id,
+				user: user.name,
 				data: { ...user, ticketColor: color },
 			}),
 		]);

@@ -1,7 +1,7 @@
 export type Message = {
 	name: string;
 	time: Date;
-	userid: number;
+	userId: number;
 	consumed: boolean;
 	user: string;
 	poisoned: boolean;

@@ -1,3 +1,4 @@
+import type { Message } from "@/lib/bus/message";
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { useEffect } from "react";
 import {
@@ -5,7 +6,6 @@ import {
 	PiCheckCircleDuotone,
 	PiEnvelopeDuotone,
 } from "react-icons/pi";
-import { Message } from "./message";
 
 export type AnimatedEventProps = {
 	id: string;
@@ -46,7 +46,6 @@ export function AnimatedEvent({
 	return (
 		<AnimatePresence>
 			<motion.g
-				// exit={{ opacity: 0 }}
 				fill="none"
 				style={{
 					offsetPath: `path("${edgePath}")`,
