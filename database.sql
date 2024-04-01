@@ -8,7 +8,6 @@ create table
 
 CREATE unique INDEX IF NOT EXISTS "slug_unique" ON "employee" ("slug");
 
-
 create table
   metrics (
     version bigint primary key generated always as identity,
